@@ -1,0 +1,86 @@
+version: "3.9"
+
+# ============================================================
+# SLR-Nexus — Docker Compose
+# Phase 0 : PostgreSQL + Qdrant
+# Phase 6+ : Décommenter Neo4j
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL — Source de vérité métier
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: slr_nexus_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-slr_nexus}
+      POSTGRES_USER: ${POSTGRES_USER:-slr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U slr_user -d slr_nexus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ----------------------------------------------------------
+  # Qdrant — Recherche vectorielle
+  # ----------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:v1.12.1
+    container_name: slr_nexus_qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   # REST API
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:6333/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ----------------------------------------------------------
+  # Neo4j — Graphe de connaissances (Phase 6+)
+  # Décommenter quand nécessaire
+  # ----------------------------------------------------------
+  # neo4j:
+  #   image: neo4j:5.26.0
+  #   container_name: slr_nexus_neo4j
+  #   restart: unless-stopped
+  #   environment:
+  #     NEO4J_AUTH: neo4j/changeme
+  #     NEO4J_PLUGINS: '["apoc"]'
+  #     NEO4J_dbms_memory_heap_initial__size: 512m
+  #     NEO4J_dbms_memory_heap_max__size: 1G
+  #   ports:
+  #     - "7474:7474"   # HTTP Browser
+  #     - "7687:7687"   # Bolt
+  #   volumes:
+  #     - neo4j_data:/data
+  #     - neo4j_logs:/logs
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "cypher-shell -u neo4j -p changeme 'RETURN 1'"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  # neo4j_data:
+  # neo4j_logs:

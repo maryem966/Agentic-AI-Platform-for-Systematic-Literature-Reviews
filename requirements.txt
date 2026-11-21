@@ -1,0 +1,110 @@
+# ============================================================
+# SLR-Nexus — Requirements
+# Versions directes épinglées pour une résolution reproductible.
+# Python supporté : 3.11.x. La CI vérifie le noyau LangChain/LangGraph/Pydantic.
+# Les versions transitives sont résolues par pip et ne constituent pas un lock complet.
+# Date de préparation : Novembre 2026
+# ============================================================
+
+# ----------------------------------------------------------------
+# Phase 0-1 : Fondations (domaine, validation, config)
+# ----------------------------------------------------------------
+pydantic==2.9.2
+pydantic-settings==2.6.1
+
+# ----------------------------------------------------------------
+# Phase 2 : Orchestration LangGraph
+# IMPORTANT : LangChain + LangGraph + LangChain-Core doivent être
+# testés ensemble avant tout développement.
+# ----------------------------------------------------------------
+langchain==0.3.7
+langchain-core==0.3.15
+langchain-community==0.3.5
+langchain-ollama==0.2.0
+langchain-groq==0.2.1
+langgraph==0.2.42
+langgraph-checkpoint==2.0.6
+langgraph-checkpoint-postgres==2.0.6
+
+# ----------------------------------------------------------------
+# Phase 1 : API Layer
+# ----------------------------------------------------------------
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+httpx==0.28.1
+sse-starlette==2.1.3
+python-multipart==0.0.12
+
+# ----------------------------------------------------------------
+# Phase 1 : Base relationnelle PostgreSQL
+# ----------------------------------------------------------------
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# ----------------------------------------------------------------
+# Phase 1 : Recherche vectorielle Qdrant
+# ----------------------------------------------------------------
+qdrant-client==1.12.1
+
+# ----------------------------------------------------------------
+# Phase 6+ : Graphe de connaissances Neo4j
+# ----------------------------------------------------------------
+neo4j==5.26.0
+
+# ----------------------------------------------------------------
+# Phase 2 : Fournisseurs LLM
+# ----------------------------------------------------------------
+ollama==0.4.2
+groq==0.12.0
+
+# ----------------------------------------------------------------
+# Phase 3+ : Traitement PDF
+# ----------------------------------------------------------------
+pymupdf==1.24.13
+
+# ----------------------------------------------------------------
+# Phase 4+ : RAG Hybride
+# ----------------------------------------------------------------
+rank-bm25==0.2.2
+sentence-transformers==3.3.1
+
+# ----------------------------------------------------------------
+# Phase 4+ : Évaluation RAG
+# ----------------------------------------------------------------
+ragas==0.2.4
+datasets==3.1.0
+
+# ----------------------------------------------------------------
+# Phase 5+ : NLI pour vérification des claims
+# ----------------------------------------------------------------
+# torch — installer séparément selon GPU disponible
+# CPU : pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# ----------------------------------------------------------------
+# Phase 9+ : Interface utilisateur
+# ----------------------------------------------------------------
+streamlit==1.40.1
+
+# ----------------------------------------------------------------
+# Observabilité
+# ----------------------------------------------------------------
+structlog==24.4.0
+opentelemetry-api==1.28.4
+opentelemetry-sdk==1.28.4
+
+# ----------------------------------------------------------------
+# Utilitaires
+# ----------------------------------------------------------------
+python-dotenv==1.0.1
+tenacity==9.0.0
+
+# ----------------------------------------------------------------
+# Tests et qualité du code
+# ----------------------------------------------------------------
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+ruff==0.8.1
+mypy==1.13.0

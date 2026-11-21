@@ -1,0 +1,61 @@
+[project]
+name = "slr-nexus"
+version = "0.1.0"
+description = "Plateforme intelligente d'assistance aux Revues Systématiques de Littérature"
+authors = [
+    {name = "maryem966"}
+]
+requires-python = "==3.11.*"
+readme = "README.md"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "ANN"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+# Vérification stricte du domaine uniquement
+# Les adapters infra peuvent importer des libs tierces
+
+[[tool.mypy.overrides]]
+module = "src.domain.*"
+disallow_untyped_defs = true
+disallow_any_generics = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+    "src.infrastructure.*",
+    "src.agents.*",
+    "src.orchestration.*",
+    "src.rag.*",
+    "src.api.*",
+]
+ignore_missing_imports = true
+disallow_untyped_defs = false
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "scripts/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
