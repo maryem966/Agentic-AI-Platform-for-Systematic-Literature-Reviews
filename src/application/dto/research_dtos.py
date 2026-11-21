@@ -2,12 +2,13 @@
 DTOs : Modèles de transport entre couches applicatives.
 Ces modèles ne sont PAS des entités du domaine.
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-
 # --- Projet ---
+
 
 class CreateResearchProjectDTO(BaseModel):
     title: str = Field(..., min_length=3, max_length=255)
@@ -24,7 +25,13 @@ class ResearchProjectResponseDTO(BaseModel):
     protocol_id: str | None = None
 
 
+class ListProjectsInput(BaseModel):
+    limit: int = Field(default=100, ge=1, le=500)
+    offset: int = Field(default=0, ge=0)
+
+
 # --- Protocole ---
+
 
 class ResearchQuestionDTO(BaseModel):
     text: str = Field(..., min_length=10)
@@ -37,12 +44,29 @@ class DefineProtocolDTO(BaseModel):
     inclusion_criteria: list[str] = Field(..., min_length=2)
     exclusion_criteria: list[str] = Field(..., min_length=2)
     target_databases: list[str] = Field(
-        default=["openalex", "crossref", "semantic_scholar"]
+        default_factory=lambda: ["openalex", "crossref", "semantic_scholar"]
     )
     start_year: int | None = None
     end_year: int | None = None
     language_filter: list[str] = Field(default_factory=list)
     defined_by: str
+
+
+class PlanningInput(BaseModel):
+    research_id: str
+    topic: str = Field(..., min_length=10)
+    objectives: list[str] = Field(default_factory=list)
+    requested_by: str
+
+
+class SearchInput(BaseModel):
+    research_id: str
+    protocol_id: str
+    query: str = Field(..., min_length=1)
+    sources: list[str] = Field(default_factory=lambda: ["openalex", "crossref", "semantic_scholar"])
+    start_year: int | None = None
+    end_year: int | None = None
+    limit_per_source: int = Field(default=25, ge=1, le=1000)
 
 
 class ModifyProtocolDTO(BaseModel):
@@ -56,6 +80,7 @@ class ModifyProtocolDTO(BaseModel):
 
 # --- Validation humaine ---
 
+
 class HumanValidationDTO(BaseModel):
     research_id: str
     review_type: str
@@ -66,6 +91,7 @@ class HumanValidationDTO(BaseModel):
 
 # --- Screening ---
 
+
 class ScreeningArbitrationDTO(BaseModel):
     publication_id: str
     decision: str  # "include" ou "exclude"
@@ -74,6 +100,7 @@ class ScreeningArbitrationDTO(BaseModel):
 
 
 # --- Requête RAG ---
+
 
 class RAGQueryDTO(BaseModel):
     research_id: str

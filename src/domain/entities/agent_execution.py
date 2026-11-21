@@ -2,6 +2,7 @@
 Entité : AgentExecution
 Trace d'une exécution d'agent avec métriques de consommation LLM.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -20,7 +21,7 @@ class AgentExecution(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     research_id: str
     agent_name: str
-    input_summary: str             # Résumé de l'entrée — PAS les données complètes
+    input_summary: str  # Résumé de l'entrée — PAS les données complètes
     output_summary: str | None = None
     status: Literal[
         "running",
@@ -31,7 +32,7 @@ class AgentExecution(BaseModel):
     llm_calls: int = 0
     tokens_input: int = 0
     tokens_output: int = 0
-    llm_provider: str              # Ex: "ollama", "groq"
+    llm_provider: str  # Ex: "ollama", "groq"
     duration_ms: int = 0
     error_message: str | None = None
     started_at: datetime = Field(default_factory=datetime.utcnow)
@@ -56,7 +57,7 @@ class AgentExecution(BaseModel):
         llm_calls: int = 0,
         tokens_input: int = 0,
         tokens_output: int = 0,
-    ) -> "AgentExecution":
+    ) -> AgentExecution:
         return self.model_copy(
             update={
                 "status": "completed",
@@ -69,7 +70,7 @@ class AgentExecution(BaseModel):
             }
         )
 
-    def mark_failed(self, error_message: str, duration_ms: int) -> "AgentExecution":
+    def mark_failed(self, error_message: str, duration_ms: int) -> AgentExecution:
         return self.model_copy(
             update={
                 "status": "failed",
@@ -79,7 +80,7 @@ class AgentExecution(BaseModel):
             }
         )
 
-    def mark_escalated(self, reason: str) -> "AgentExecution":
+    def mark_escalated(self, reason: str) -> AgentExecution:
         return self.model_copy(
             update={
                 "status": "escalated",

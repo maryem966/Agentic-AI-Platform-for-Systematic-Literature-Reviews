@@ -2,27 +2,25 @@
 Use Case : CreateResearchProject
 Crée un nouveau projet SLR.
 """
+
 from __future__ import annotations
 
 from ...domain.entities.research_project import ResearchProject
+from ...domain.ports.research_project_repository import ResearchProjectRepository
 from ..dto.research_dtos import CreateResearchProjectDTO, ResearchProjectResponseDTO
 
 
 class CreateResearchProjectUseCase:
     """
     Use case : Créer un nouveau projet SLR.
-    
-    Phase 0 : Implémentation stub — pas de persistence.
-    Phase 1 : Injecter ProjectRepository pour la persistence PostgreSQL.
+
+    Persiste le projet via le port injecté, sans dépendre d'un adapter concret.
     """
 
-    # En Phase 1, on injectera : project_repo: ProjectRepository
-    def __init__(self) -> None:
-        pass
+    def __init__(self, project_repo: ResearchProjectRepository) -> None:
+        self.project_repo = project_repo
 
-    async def execute(
-        self, dto: CreateResearchProjectDTO
-    ) -> ResearchProjectResponseDTO:
+    async def execute(self, dto: CreateResearchProjectDTO) -> ResearchProjectResponseDTO:
         """
         Crée un ResearchProject à partir du DTO.
         Validation Pydantic automatique par le modèle de domaine.
@@ -33,8 +31,7 @@ class CreateResearchProjectUseCase:
             created_by=dto.created_by,
         )
 
-        # Phase 1 : project = await self.project_repo.save(project)
-        # Pour Phase 0, on retourne directement l'entité créée
+        project = await self.project_repo.save(project)
 
         return ResearchProjectResponseDTO(
             id=project.id,

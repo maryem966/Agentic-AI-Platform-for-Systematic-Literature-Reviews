@@ -2,6 +2,7 @@
 Entités : Publication, Author
 Métadonnées bibliographiques centralisées.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -33,9 +34,9 @@ class Publication(BaseModel):
     abstract: str | None = None
     doi: str | None = None
     url: str | None = None
-    source: str                    # Source de découverte : "openalex", "crossref"...
+    source: str  # Source de découverte : "openalex", "crossref"...
     journal: str | None = None
-    document_id: str | None = None # Lien vers FullTextDocument si PDF disponible
+    document_id: str | None = None  # Lien vers FullTextDocument si PDF disponible
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     @property

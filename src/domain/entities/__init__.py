@@ -2,6 +2,16 @@
 Entités du domaine SLR-Nexus.
 Aucune dépendance externe — uniquement Pydantic + stdlib.
 """
+
+from .agent_execution import AgentExecution
+from .chunk import Chunk
+from .claim import Claim, ClaimEvidenceLink
+from .evidence import Evidence
+from .extraction_record import ExtractionRecord
+from .full_text_document import FullTextDocument
+from .human_review import HumanReview
+from .publication import Author, Publication
+from .report_version import ReportVersion
 from .research_project import ResearchProject
 from .research_protocol import (
     DateRange,
@@ -9,17 +19,8 @@ from .research_protocol import (
     ResearchProtocol,
     ResearchQuestion,
 )
-from .search_run import SearchQuery, SearchRun
-from .publication import Author, Publication
-from .full_text_document import FullTextDocument
 from .screening_decision import ScreeningDecision
-from .chunk import Chunk
-from .extraction_record import ExtractionRecord
-from .evidence import Evidence
-from .claim import Claim, ClaimEvidenceLink
-from .report_version import ReportVersion
-from .agent_execution import AgentExecution
-from .human_review import HumanReview
+from .search_run import SearchQuery, SearchRun
 
 __all__ = [
     "ResearchProject",

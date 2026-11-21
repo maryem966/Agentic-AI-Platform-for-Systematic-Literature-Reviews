@@ -2,6 +2,7 @@
 Entité : ScreeningDecision
 Décision d'inclusion/exclusion pour une publication à une étape du screening.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -11,20 +12,22 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 # Codes de motifs d'exclusion standardisés
-STANDARD_EXCLUSION_REASONS: frozenset[str] = frozenset({
-    "wrong_population",
-    "wrong_intervention",
-    "wrong_outcome",
-    "wrong_study_design",
-    "wrong_language",
-    "wrong_date",
-    "duplicate",
-    "not_peer_reviewed",
-    "insufficient_data",
-    "full_text_unavailable",
-    "retracted",
-    "other",
-})
+STANDARD_EXCLUSION_REASONS: frozenset[str] = frozenset(
+    {
+        "wrong_population",
+        "wrong_intervention",
+        "wrong_outcome",
+        "wrong_study_design",
+        "wrong_language",
+        "wrong_date",
+        "duplicate",
+        "not_peer_reviewed",
+        "insufficient_data",
+        "full_text_unavailable",
+        "retracted",
+        "other",
+    }
+)
 
 
 class ScreeningDecision(BaseModel):
@@ -50,13 +53,11 @@ class ScreeningDecision(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     @model_validator(mode="after")
-    def validate_exclusion_reason(self) -> "ScreeningDecision":
+    def validate_exclusion_reason(self) -> ScreeningDecision:
         """Un motif d'exclusion est obligatoire quand decision == 'exclude'."""
         if self.decision == "exclude":
             if not self.exclusion_reason:
-                raise ValueError(
-                    "exclusion_reason est obligatoire quand decision == 'exclude'"
-                )
+                raise ValueError("exclusion_reason est obligatoire quand decision == 'exclude'")
             if self.exclusion_reason not in STANDARD_EXCLUSION_REASONS:
                 raise ValueError(
                     f"Motif d'exclusion non standardisé : '{self.exclusion_reason}'. "
@@ -81,7 +82,7 @@ class ScreeningDecision(BaseModel):
         new_decision: Literal["include", "exclude"],
         human_review_id: str,
         exclusion_reason: str | None = None,
-    ) -> "ScreeningDecision":
+    ) -> ScreeningDecision:
         """Remplace la décision automatique par la décision humaine."""
         return self.model_copy(
             update={

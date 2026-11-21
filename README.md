@@ -67,7 +67,16 @@ pytest tests/unit/ -v
 # 6. Vérifier l'isolation du domaine
 python scripts/check_domain_imports.py
 
-# 7. Construire et lancer l'image applicative (API squelette + healthcheck)
+# 7. Appliquer les migrations du schéma
+python -m alembic upgrade head
+
+# Vérifier une écriture/lecture PostgreSQL sans conserver de données de test
+python scripts/check_postgres_adapter.py
+
+# 8. Créer les collections et tester l'aller-retour Qdrant
+python scripts/check_qdrant_adapter.py
+
+# 9. Construire et lancer l'image applicative (API squelette + healthcheck)
 docker build -f docker/Dockerfile -t slr-nexus .
 docker run --rm -p 8000:8000 slr-nexus
 # Vérifier : http://localhost:8000/health
@@ -101,7 +110,7 @@ Les vérifications de compatibilité des versions sont décrites dans `docs/depe
 | Phase | Description | Durée | Statut |
 |-------|-------------|-------|--------|
 | **0** | Fondations, domaine complet, Docker, CI/CD | 2 sem | 🟡 En cours |
-| **1** | Adapters PostgreSQL, Qdrant, LLM, APIs scientifiques | 2 sem | ⬜ |
+| **1** | Adapters PostgreSQL, Qdrant, LLM, APIs scientifiques | 2 sem | 🟡 En cours |
 | **2** | LangGraph, Planning Agent, Search Agent, HITL | 3 sem | ⬜ |
 | **3** | Screening Agent, PDF ingestion, Evidence Registry | 3 sem | ⬜ |
 | **4** | RAG hybride complet + Golden Dataset + benchmark | 3 sem | ⬜ |

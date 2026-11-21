@@ -2,16 +2,18 @@
 Port : LLMPort
 Interface abstraite pour les appels LLM (implémentée par Ollama / Groq adapters).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
 @dataclass
 class LLMResponse:
     """Réponse brute d'un appel LLM."""
+
     content: str
     model: str
     provider: str

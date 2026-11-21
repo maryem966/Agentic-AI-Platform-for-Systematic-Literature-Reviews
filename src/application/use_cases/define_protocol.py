@@ -2,6 +2,7 @@
 Use Case : DefineProtocol
 Crée un ResearchProtocol à partir des critères fournis.
 """
+
 from __future__ import annotations
 
 from ...domain.entities.research_protocol import (
@@ -9,25 +10,26 @@ from ...domain.entities.research_protocol import (
     ResearchProtocol,
     ResearchQuestion,
 )
+from ...domain.ports.protocol_repository import ProtocolRepository
 from ..dto.research_dtos import DefineProtocolDTO
 
 
 class DefineProtocolUseCase:
     """
     Use case : Définir le protocole de recherche.
-    
-    Phase 0 : Stub sans persistence.
-    Phase 1 : Injecter ProtocolRepository.
+
     Phase 2 : Brancher sur le Planning Agent LangGraph.
     """
+
+    def __init__(self, protocol_repo: ProtocolRepository) -> None:
+        self.protocol_repo = protocol_repo
 
     async def execute(self, dto: DefineProtocolDTO) -> ResearchProtocol:
         """
         Construit un ResearchProtocol et vérifie les postconditions.
         """
         questions = [
-            ResearchQuestion(text=rq.text, category=rq.category)
-            for rq in dto.research_questions
+            ResearchQuestion(text=rq.text, category=rq.category) for rq in dto.research_questions
         ]
 
         date_range: DateRange | None = None
@@ -46,9 +48,6 @@ class DefineProtocolUseCase:
 
         valid, errors = protocol.validate_postconditions()
         if not valid:
-            raise ValueError(
-                f"Protocole invalide — postconditions non satisfaites : {errors}"
-            )
+            raise ValueError(f"Protocole invalide — postconditions non satisfaites : {errors}")
 
-        # Phase 1 : protocol = await self.protocol_repo.save(protocol)
-        return protocol
+        return await self.protocol_repo.save(protocol)

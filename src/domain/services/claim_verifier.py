@@ -2,6 +2,7 @@
 Service : ClaimVerifier
 Vérification des claims en 4 niveaux (Section 11.1 du CdC).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -26,14 +27,14 @@ class ClaimVerification:
     ]
     reason: str | None
     verification_method: Literal[
-        "existence",   # Niveau 1
+        "existence",  # Niveau 1
         "provenance",  # Niveau 2
-        "semantic",    # Niveau 3
+        "semantic",  # Niveau 3
         "entailment",  # Niveau 4
-        "combined",    # Plusieurs niveaux
+        "combined",  # Plusieurs niveaux
     ]
     semantic_similarity_score: float | None = None
-    entailment_label: str | None = None          # "entailment", "neutral", "contradiction"
+    entailment_label: str | None = None  # "entailment", "neutral", "contradiction"
     contradicting_evidence_ids: list[str] = field(default_factory=list)
     missing_evidence_ids: list[str] = field(default_factory=list)
     requires_human_review: bool = False

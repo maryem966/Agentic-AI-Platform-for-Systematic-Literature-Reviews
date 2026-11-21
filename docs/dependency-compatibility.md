@@ -16,3 +16,4 @@ La CI vérifie la résolution de la pile critique sur Python 3.11 à chaque exé
 |---|---|---|---|
 | 2026-11-21 | 3.11.1 | Partiel | Import du domaine et 65 tests locaux réussis. La pile LangChain/LangGraph complète n'était pas installée dans l'environnement local. |
 | CI | 3.11.x | À exécuter | Le workflow installe ensemble les versions critiques épinglées et vérifie résolution/importation. |
+| 2026-11-22 | 3.11.x | Conflit corrigé | `ollama==0.4.2` requiert `httpx<0.28`; le pin direct est ajusté à `httpx==0.27.2`. L'installation complète reste à confirmer par la CI. |

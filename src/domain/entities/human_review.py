@@ -2,27 +2,32 @@
 Entité : HumanReview
 Décision humaine à un point d'interruption du workflow LangGraph.
 """
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 # Types de validation humaine (Section 13.1 du CdC)
-BLOCKING_REVIEW_TYPES: frozenset[str] = frozenset({
-    "protocol_validation",   # Toujours bloquant
-    "quality_escalation",    # Bloquant
-    "report_approval",       # Toujours bloquant
-})
+BLOCKING_REVIEW_TYPES: frozenset[str] = frozenset(
+    {
+        "protocol_validation",  # Toujours bloquant
+        "quality_escalation",  # Bloquant
+        "report_approval",  # Toujours bloquant
+    }
+)
 
-NON_BLOCKING_REVIEW_TYPES: frozenset[str] = frozenset({
-    "screening_arbitration", # Timeout 24h → exclude par défaut
-    "neo4j_conflict",        # Timeout 1h → relation non insérée
-    "agent_disagreement",    # Timeout 1h → première décision
-    "evidence_validation",   # Non bloquant
-})
+NON_BLOCKING_REVIEW_TYPES: frozenset[str] = frozenset(
+    {
+        "screening_arbitration",  # Timeout 24h → exclude par défaut
+        "neo4j_conflict",  # Timeout 1h → relation non insérée
+        "agent_disagreement",  # Timeout 1h → première décision
+        "evidence_validation",  # Non bloquant
+    }
+)
 
 
 class HumanReview(BaseModel):
@@ -43,7 +48,7 @@ class HumanReview(BaseModel):
         "report_approval",
     ]
     reviewer_id: str
-    context_snapshot: dict = Field(default_factory=dict)
+    context_snapshot: dict[str, Any] = Field(default_factory=dict)
     # Données exactes présentées au validateur au moment de la décision
     decision: str
     justification: str = Field(..., min_length=5)

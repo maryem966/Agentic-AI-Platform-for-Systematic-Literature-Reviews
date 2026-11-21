@@ -3,6 +3,7 @@ Service : EntityNormalizer
 Normalisation des entités scientifiques extraites (méthodes, datasets, métriques).
 Service concret — pas de LLM, règles déterministes.
 """
+
 from __future__ import annotations
 
 
@@ -10,7 +11,7 @@ class EntityNormalizer:
     """
     Normalise les noms d'entités scientifiques pour éviter les doublons
     dans le Knowledge Graph Neo4j (Phase 6+).
-    
+
     Ex: "RF", "random forest", "Random-Forest" → "Random Forest"
     """
 

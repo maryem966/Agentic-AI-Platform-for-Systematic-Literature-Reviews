@@ -1,6 +1,9 @@
 """Value Object : MemoryPolicy — Politiques d'isolation de la mémoire"""
+
 from __future__ import annotations
+
 from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -18,10 +21,10 @@ class MemoryPolicy(BaseModel):
     """
 
     scope: Literal["research", "user", "system"] = "research"
-    retention_days: int | None = None   # None = conservation indéfinie
+    retention_days: int | None = None  # None = conservation indéfinie
     allow_cross_research: bool = False  # Par défaut : isolation stricte
     consolidation_rule: str | None = None  # Condition de mémorisation à long terme
-    provenance_required: bool = True    # Chaque fait mémorisé a un research_id source
+    provenance_required: bool = True  # Chaque fait mémorisé a un research_id source
 
     @property
     def is_isolated(self) -> bool:

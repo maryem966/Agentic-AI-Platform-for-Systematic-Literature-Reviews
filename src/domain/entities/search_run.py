@@ -2,11 +2,12 @@
 Entités : SearchRun, SearchQuery
 Traçabilité complète des recherches exécutées sur les APIs scientifiques.
 """
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -20,8 +21,8 @@ class SearchQuery(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     search_run_id: str
     source: Literal["openalex", "crossref", "semantic_scholar", "manual"]
-    query_string: str              # Requête exacte envoyée à l'API
-    filters_applied: dict = Field(default_factory=dict)  # Date, langue, type...
+    query_string: str  # Requête exacte envoyée à l'API
+    filters_applied: dict[str, Any] = Field(default_factory=dict)  # Date, langue, type...
     results_count: int = 0
     executed_at: datetime = Field(default_factory=datetime.utcnow)
     http_status: int | None = None
@@ -45,7 +46,7 @@ class SearchRun(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     research_id: str
-    protocol_id: str               # Version exacte du protocole utilisée
+    protocol_id: str  # Version exacte du protocole utilisée
     protocol_version: int
     executed_at: datetime = Field(default_factory=datetime.utcnow)
     queries: list[SearchQuery] = Field(default_factory=list)

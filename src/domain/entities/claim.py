@@ -2,6 +2,7 @@
 Entités : Claim, ClaimEvidenceLink
 Affirmations du rapport de synthèse et leurs liens aux preuves.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -10,10 +11,12 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ACCEPTABLE_CLAIM_STATUSES: frozenset[str] = frozenset({
-    "supported",
-    "partially_supported",
-})
+ACCEPTABLE_CLAIM_STATUSES: frozenset[str] = frozenset(
+    {
+        "supported",
+        "partially_supported",
+    }
+)
 
 
 class Claim(BaseModel):
@@ -26,9 +29,9 @@ class Claim(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     text: str = Field(..., min_length=10)
-    rq_id: str                     # Question de recherche concernée
+    rq_id: str  # Question de recherche concernée
     report_version_id: str
-    section: str                   # Section du rapport (ex: "Introduction", "RQ1")
+    section: str  # Section du rapport (ex: "Introduction", "RQ1")
     status: Literal[
         "supported",
         "partially_supported",

@@ -2,16 +2,19 @@
 Port : KGRepository
 Interface abstraite vers le graphe de connaissances Neo4j (Phase 6+).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
 class GraphResult:
     """Résultat d'une requête sur le graphe de connaissances."""
-    data: dict = field(default_factory=dict)
+
+    data: dict[str, Any] = field(default_factory=dict)
     source_node_id: str | None = None
     relationship_type: str | None = None
 
@@ -27,7 +30,7 @@ class KGRepository(ABC):
     async def query_template(
         self,
         template_name: str,
-        params: dict,
+        params: dict[str, Any],
     ) -> list[GraphResult]:
         """
         Exécute un template Cypher pré-approuvé avec des paramètres.
@@ -40,7 +43,7 @@ class KGRepository(ABC):
     async def node_exists(
         self,
         node_type: str,
-        properties: dict,
+        properties: dict[str, Any],
     ) -> bool:
         """Vérifie si un nœud existe dans le graphe."""
         ...

@@ -2,6 +2,7 @@
 Entité : ReportVersion
 Version d'un rapport de synthèse SLR, avec ses métadonnées de qualité.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -19,7 +20,7 @@ class ReportVersion(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     research_id: str
     version: int
-    content: dict = Field(default_factory=dict)
+    content: dict[str, str] = Field(default_factory=dict)
     # Structure : {"introduction": "...", "rq1": "...", "rq2": "...", "conclusion": "..."}
     generated_by_agent: str
     generated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -45,7 +46,7 @@ class ReportVersion(BaseModel):
         """Retourne les noms de toutes les sections disponibles."""
         return list(self.content.keys())
 
-    def mark_approved(self, human_review_id: str) -> "ReportVersion":
+    def mark_approved(self, human_review_id: str) -> ReportVersion:
         """Approuve le rapport — action humaine obligatoire."""
         return self.model_copy(
             update={

@@ -2,18 +2,21 @@
 Port : VectorStore
 Interface abstraite pour le stockage et la recherche vectorielle (implémentée par Qdrant).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
 class VectorSearchResult:
     """Résultat d'une recherche vectorielle."""
+
     id: str
     score: float
-    payload: dict = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
 
 
 class VectorStore(ABC):
@@ -25,7 +28,7 @@ class VectorStore(ABC):
         collection: str,
         doc_id: str,
         vector: list[float],
-        payload: dict,
+        payload: dict[str, Any],
     ) -> None:
         """
         Insère ou met à jour un vecteur dans une collection.
@@ -37,7 +40,7 @@ class VectorStore(ABC):
     async def bulk_upsert(
         self,
         collection: str,
-        items: list[tuple[str, list[float], dict]],
+        items: list[tuple[str, list[float], dict[str, Any]]],
     ) -> None:
         """Insertion en lot. Idempotent. items = [(id, vector, payload), ...]"""
         ...
@@ -48,7 +51,7 @@ class VectorStore(ABC):
         collection: str,
         query_vector: list[float],
         top_k: int,
-        filters: dict | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[VectorSearchResult]:
         """Recherche les top_k vecteurs les plus proches."""
         ...

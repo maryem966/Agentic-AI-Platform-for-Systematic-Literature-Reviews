@@ -9,10 +9,10 @@ RÈGLE ABSOLUE DE SÉCURITÉ (Section 10.4 du CdC) :
 
 Usage :
   from src.config.cypher_templates import CYPHER_TEMPLATES, ALLOWED_TEMPLATE_NAMES
-  
+
   if template_name not in ALLOWED_TEMPLATE_NAMES:
       raise ValueError(f"Template Cypher non autorisé : {template_name}")
-  
+
   cypher = CYPHER_TEMPLATES[template_name]
   results = await neo4j_read_only.query(cypher, params)
 """
@@ -24,7 +24,6 @@ CYPHER_TEMPLATES: dict[str, str] = {
         RETURN p.id AS pub_id, p.title AS title
         LIMIT $limit
     """,
-
     # Trouver les datasets utilisés avec une méthode donnée
     "method_to_datasets": """
         MATCH (m:Method {name: $method})<-[:USES_METHOD]-(p:Publication)
@@ -32,7 +31,6 @@ CYPHER_TEMPLATES: dict[str, str] = {
         RETURN d.name AS dataset, p.id AS pub_id
         LIMIT $limit
     """,
-
     # Toutes les relations d'une publication
     "publication_relations": """
         MATCH (p:Publication {id: $pub_id})-[r]->(n)
@@ -40,7 +38,6 @@ CYPHER_TEMPLATES: dict[str, str] = {
                n.name AS node_name, n.id AS node_id
         LIMIT $limit
     """,
-
     # Publications utilisant deux méthodes en même temps (comparaison)
     "method_comparison": """
         MATCH (m1:Method {name: $method1})<-[:USES_METHOD]-(p:Publication)
@@ -48,14 +45,12 @@ CYPHER_TEMPLATES: dict[str, str] = {
         RETURN p.id AS pub_id, p.title AS title
         LIMIT $limit
     """,
-
     # Publications utilisant un dataset spécifique
     "dataset_publications": """
         MATCH (d:Dataset {name: $dataset})<-[:USES_DATASET]-(p:Publication)
         RETURN p.id AS pub_id, p.title AS title
         LIMIT $limit
     """,
-
     # Résultats et métriques d'une publication
     "publication_metrics": """
         MATCH (p:Publication {id: $pub_id})-[:REPORTS_RESULT]->(r:Result)
@@ -64,21 +59,18 @@ CYPHER_TEMPLATES: dict[str, str] = {
                r.evidence_id AS evidence_id
         LIMIT $limit
     """,
-
     # Publications qui contredisent une publication donnée
     "contradicting_publications": """
         MATCH (p1:Publication {id: $pub_id})-[:CONTRADICTS]->(p2:Publication)
         RETURN p2.id AS pub_id, p2.title AS title
         LIMIT $limit
     """,
-
     # Publications qui soutiennent une publication donnée
     "supporting_publications": """
         MATCH (p1:Publication {id: $pub_id})-[:SUPPORTS]->(p2:Publication)
         RETURN p2.id AS pub_id, p2.title AS title
         LIMIT $limit
     """,
-
     # Limitations signalées dans une publication
     "publication_limitations": """
         MATCH (p:Publication {id: $pub_id})-[:HAS_LIMITATION]->(l:Limitation)

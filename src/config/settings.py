@@ -3,9 +3,11 @@ Configuration centralisée — Pydantic BaseSettings.
 Toutes les valeurs proviennent des variables d'environnement ou de .env.
 JAMAIS de secrets dans le code source.
 """
+
 from __future__ import annotations
 
-from pydantic import Field
+from urllib.parse import quote_plus
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,14 +31,15 @@ class Settings(BaseSettings):
     postgres_db: str = "slr_nexus"
     postgres_user: str = "slr_user"
     postgres_password: str = "changeme"
-    database_url: str = (
-        "postgresql+asyncpg://slr_user:changeme@localhost:5432/slr_nexus"
-    )
+    database_url: str = ""
 
     # --- Qdrant ---
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
     qdrant_api_key: str = ""
+    qdrant_chunks_collection: str = "chunks"
+    qdrant_memory_collection: str = "semantic_memory"
+    embedding_vector_size: int = 384
 
     # --- Neo4j (Phase 6+) ---
     neo4j_uri: str = "bolt://localhost:7687"
@@ -54,6 +57,11 @@ class Settings(BaseSettings):
     # --- APIs scientifiques ---
     semantic_scholar_api_key: str = ""
     crossref_email: str = ""
+    openalex_base_url: str = "https://api.openalex.org"
+    crossref_base_url: str = "https://api.crossref.org"
+    semantic_scholar_base_url: str = "https://api.semanticscholar.org/graph/v1"
+    scientific_api_max_retries: int = 4
+    scientific_api_backoff_seconds: float = 0.5
 
     # --- Workflow ---
     max_tokens_per_workflow: int = 100000
@@ -83,6 +91,19 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def resolved_database_url(self) -> str:
+        """Use the explicit URL override or safely assemble it from POSTGRES_* settings."""
+        if self.database_url.strip():
+            return self.database_url
+        username = quote_plus(self.postgres_user)
+        password = quote_plus(self.postgres_password)
+        database = quote_plus(self.postgres_db)
+        return (
+            f"postgresql+asyncpg://{username}:{password}@"
+            f"{self.postgres_host}:{self.postgres_port}/{database}"
+        )
 
 
 # Instance singleton — importée partout dans le projet

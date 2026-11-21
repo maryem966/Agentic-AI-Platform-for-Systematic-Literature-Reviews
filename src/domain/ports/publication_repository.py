@@ -2,6 +2,7 @@
 Port : PublicationRepository
 Interface abstraite pour la persistance des publications (implémentée en Phase 1 par PostgreSQL).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -28,9 +29,7 @@ class PublicationRepository(ABC):
         ...
 
     @abstractmethod
-    async def find_by_external_id(
-        self, source: str, external_id: str
-    ) -> Publication | None:
+    async def find_by_external_id(self, source: str, external_id: str) -> Publication | None:
         """Retourne une publication par un ID externe (OpenAlex, Crossref...)."""
         ...
 

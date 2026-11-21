@@ -2,6 +2,7 @@
 Entité : ResearchProject
 Projet de revue systématique de littérature et son cycle de vie.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -48,7 +49,7 @@ class ResearchProject(BaseModel):
 
     model_config = {"frozen": False}
 
-    def transition_to(self, new_status: str) -> "ResearchProject":
+    def transition_to(self, new_status: str) -> ResearchProject:
         """
         Retourne un nouveau projet avec le statut mis à jour.
         Lève ValueError si la transition n'est pas autorisée.
@@ -70,7 +71,7 @@ class ResearchProject(BaseModel):
         """Vérifie si la transition est autorisée sans la déclencher."""
         return new_status in PROJECT_TRANSITIONS.get(self.status, [])
 
-    def attach_protocol(self, protocol_id: str) -> "ResearchProject":
+    def attach_protocol(self, protocol_id: str) -> ResearchProject:
         """Attache un protocole et passe au statut 'protocol_defined'."""
         project = self.transition_to("protocol_defined")
         return project.model_copy(update={"protocol_id": protocol_id})

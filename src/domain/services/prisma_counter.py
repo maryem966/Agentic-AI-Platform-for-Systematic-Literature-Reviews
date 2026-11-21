@@ -3,6 +3,7 @@ Service : PRISMACounter
 Calcul des comptages PRISMA depuis les données brutes.
 Section 6.2 du CdC.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -54,22 +55,16 @@ class PRISMAFlow:
 
         # Vérification 2 : after_deduplication ≤ total_identified
         if self.after_deduplication > self.total_identified:
-            errors.append(
-                "after_deduplication > total_identified — incohérence de déduplication"
-            )
+            errors.append("after_deduplication > total_identified — incohérence de déduplication")
 
         # Vérification 3 : assessed_full_text ≤ screened_title_abstract
         screened = self.screened_title_abstract or self.after_deduplication
         if self.assessed_full_text > screened:
-            errors.append(
-                "assessed_full_text > screened — incohérence de screening"
-            )
+            errors.append("assessed_full_text > screened — incohérence de screening")
 
         # Vérification 4 : included = assessed - excluded_ft - inaccessible
         if self.assessed_full_text > 0 and self.included > 0:
-            expected = (
-                self.assessed_full_text - self.excluded_full_text - self.inaccessible
-            )
+            expected = self.assessed_full_text - self.excluded_full_text - self.inaccessible
             if expected != self.included:
                 errors.append(
                     f"included ({self.included}) ≠ "
@@ -98,7 +93,7 @@ class PRISMAFlow:
 class PRISMACounter:
     """
     Service de calcul des comptages PRISMA.
-    
+
     En Phase 0 : implémentation stub.
     En Phase 2 : sera connecté aux repositories PostgreSQL réels.
     """

@@ -2,6 +2,7 @@
 Entité : FullTextDocument
 Suivi du statut et du chemin des PDFs téléchargés.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -19,12 +20,12 @@ class FullTextDocument(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     publication_id: str
-    file_path: str                 # Chemin local du PDF (relatif à data/raw/pdfs/)
-    file_hash: str                 # SHA-256 — détection des doublons
+    file_path: str  # Chemin local du PDF (relatif à data/raw/pdfs/)
+    file_hash: str  # SHA-256 — détection des doublons
     extraction_status: Literal[
-        "pending",       # PDF téléchargé, extraction non lancée
-        "extracted",     # Texte extrait avec succès
-        "failed",        # Extraction échouée (PDF corrompu, protégé...)
+        "pending",  # PDF téléchargé, extraction non lancée
+        "extracted",  # Texte extrait avec succès
+        "failed",  # Extraction échouée (PDF corrompu, protégé...)
         "inaccessible",  # PDF non disponible (accès payant, lien mort...)
     ] = "pending"
     extraction_error: str | None = None
@@ -45,9 +46,7 @@ class FullTextDocument(BaseModel):
     def needs_extraction(self) -> bool:
         return self.extraction_status == "pending"
 
-    def mark_extracted(
-        self, page_count: int, extractor_version: str
-    ) -> "FullTextDocument":
+    def mark_extracted(self, page_count: int, extractor_version: str) -> FullTextDocument:
         return self.model_copy(
             update={
                 "extraction_status": "extracted",
@@ -58,7 +57,7 @@ class FullTextDocument(BaseModel):
             }
         )
 
-    def mark_failed(self, error: str) -> "FullTextDocument":
+    def mark_failed(self, error: str) -> FullTextDocument:
         return self.model_copy(
             update={
                 "extraction_status": "failed",

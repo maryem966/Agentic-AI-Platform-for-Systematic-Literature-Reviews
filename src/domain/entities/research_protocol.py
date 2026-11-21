@@ -2,6 +2,7 @@
 Entités : ResearchProtocol, ResearchQuestion, DateRange, ProtocolModification
 Protocole de recherche versionné — toute modification est justifiée et tracée.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -14,10 +15,10 @@ class DateRange(BaseModel):
     """Plage d'années pour filtrer les publications."""
 
     start: int | None = None  # Année de début (incluse)
-    end: int | None = None    # Année de fin (incluse)
+    end: int | None = None  # Année de fin (incluse)
 
     @model_validator(mode="after")
-    def validate_range(self) -> "DateRange":
+    def validate_range(self) -> DateRange:
         if self.start and self.end and self.start > self.end:
             raise ValueError(
                 f"L'année de début ({self.start}) doit être ≤ à l'année de fin ({self.end})"
@@ -41,10 +42,10 @@ class ProtocolModification(BaseModel):
 
     modified_at: datetime = Field(default_factory=datetime.utcnow)
     modified_by: str
-    field_changed: str                # Champ modifié
-    old_value: str | None = None      # Valeur avant modification
-    new_value: str                    # Valeur après modification
-    justification: str = Field(       # Obligatoire — traçabilité scientifique
+    field_changed: str  # Champ modifié
+    old_value: str | None = None  # Valeur avant modification
+    new_value: str  # Valeur après modification
+    justification: str = Field(  # Obligatoire — traçabilité scientifique
         ..., min_length=10
     )
 
@@ -88,7 +89,7 @@ class ResearchProtocol(BaseModel):
             errors.append("Au moins 2 critères d'exclusion sont requis.")
         return len(errors) == 0, errors
 
-    def mark_validated(self, validated_by: str) -> "ResearchProtocol":
+    def mark_validated(self, validated_by: str) -> ResearchProtocol:
         """Retourne le protocole marqué comme validé par un humain."""
         return self.model_copy(
             update={
@@ -105,7 +106,7 @@ class ResearchProtocol(BaseModel):
         new_value: str,
         justification: str,
         **updated_fields: object,
-    ) -> "ResearchProtocol":
+    ) -> ResearchProtocol:
         """
         Applique une modification, incrémente la version et invalide la validation.
         La revalidation humaine est requise après toute modification.
@@ -122,7 +123,7 @@ class ResearchProtocol(BaseModel):
                 **updated_fields,
                 "version": self.version + 1,
                 "modification_history": [*self.modification_history, modification],
-                "validated_by": None,   # Revalidation requise
+                "validated_by": None,  # Revalidation requise
                 "validated_at": None,
             }
         )

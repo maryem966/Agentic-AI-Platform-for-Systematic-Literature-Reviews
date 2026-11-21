@@ -2,6 +2,7 @@
 Port : EvidencePort
 Interface abstraite pour l'Evidence Registry (implémentée par PostgreSQL en Phase 1).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -20,8 +21,7 @@ class EvidencePort(ABC):
         ...
 
     @abstractmethod
-    async def find_evidence_by_id(self, evidence_id: str) -> Evidence | None:
-        ...
+    async def find_evidence_by_id(self, evidence_id: str) -> Evidence | None: ...
 
     @abstractmethod
     async def find_evidence_by_research(self, research_id: str) -> list[Evidence]:
@@ -31,8 +31,7 @@ class EvidencePort(ABC):
     @abstractmethod
     async def find_evidence_by_publication(
         self, publication_id: str, research_id: str
-    ) -> list[Evidence]:
-        ...
+    ) -> list[Evidence]: ...
 
     @abstractmethod
     async def find_trustworthy_evidence(self, research_id: str) -> list[Evidence]:
@@ -46,27 +45,21 @@ class EvidencePort(ABC):
         new_status: str,
         verification_method: str | None = None,
         human_review_id: str | None = None,
-    ) -> Evidence:
-        ...
+    ) -> Evidence: ...
 
     # --- Claim ---
     @abstractmethod
-    async def save_claim(self, claim: Claim) -> Claim:
-        ...
+    async def save_claim(self, claim: Claim) -> Claim: ...
 
     @abstractmethod
-    async def find_claim_by_id(self, claim_id: str) -> Claim | None:
-        ...
+    async def find_claim_by_id(self, claim_id: str) -> Claim | None: ...
 
     @abstractmethod
-    async def find_claims_by_report(self, report_version_id: str) -> list[Claim]:
-        ...
+    async def find_claims_by_report(self, report_version_id: str) -> list[Claim]: ...
 
     # --- ClaimEvidenceLink ---
     @abstractmethod
-    async def link_claim_to_evidence(
-        self, link: ClaimEvidenceLink
-    ) -> ClaimEvidenceLink:
+    async def link_claim_to_evidence(self, link: ClaimEvidenceLink) -> ClaimEvidenceLink:
         """Crée un lien entre un Claim et une Evidence."""
         ...
 
@@ -76,9 +69,7 @@ class EvidencePort(ABC):
         ...
 
     @abstractmethod
-    async def get_claims_without_evidence(
-        self, report_version_id: str
-    ) -> list[Claim]:
+    async def get_claims_without_evidence(self, report_version_id: str) -> list[Claim]:
         """
         Retourne les claims sans aucune preuve liée.
         Ces claims violent l'invariant : zéro claim sans evidence_id validé.

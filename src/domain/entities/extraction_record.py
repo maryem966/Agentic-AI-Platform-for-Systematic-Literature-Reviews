@@ -2,6 +2,7 @@
 Entité : ExtractionRecord
 Données structurées extraites des publications par le Research Assistant Agent.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -10,13 +11,15 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 # Champs standards attendus dans une extraction scientifique
-STANDARD_EXTRACTION_FIELDS: frozenset[str] = frozenset({
-    "method",
-    "dataset",
-    "metric",
-    "result",
-    "limitation",
-})
+STANDARD_EXTRACTION_FIELDS: frozenset[str] = frozenset(
+    {
+        "method",
+        "dataset",
+        "metric",
+        "result",
+        "limitation",
+    }
+)
 
 
 class ExtractionRecord(BaseModel):
@@ -42,7 +45,7 @@ class ExtractionRecord(BaseModel):
     publication_id: str
     research_id: str
     agent_execution_id: str
-    extracted_fields: dict = Field(default_factory=dict)
+    extracted_fields: dict[str, str] = Field(default_factory=dict)
     source_chunk_ids: list[str] = Field(default_factory=list)
     # Les chunks d'où proviennent les données extraites
     extraction_confidence: float = Field(..., ge=0.0, le=1.0)
@@ -58,7 +61,7 @@ class ExtractionRecord(BaseModel):
     @property
     def missing_fields(self) -> set[str]:
         """Retourne les champs standards manquants."""
-        return STANDARD_EXTRACTION_FIELDS - set(self.extracted_fields.keys())
+        return set(STANDARD_EXTRACTION_FIELDS - set(self.extracted_fields.keys()))
 
     @property
     def is_anchored(self) -> bool:
