@@ -21,7 +21,7 @@ class FullTextDocument(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     publication_id: str
     file_path: str  # Chemin local du PDF (relatif à data/raw/pdfs/)
-    file_hash: str  # SHA-256 — détection des doublons
+    file_hash: str | None = None  # SHA-256 — None seulement si aucun octet n'a été obtenu
     extraction_status: Literal[
         "pending",  # PDF téléchargé, extraction non lancée
         "extracted",  # Texte extrait avec succès

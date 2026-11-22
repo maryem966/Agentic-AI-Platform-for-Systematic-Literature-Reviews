@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     postgres_db: str = "slr_nexus"
     postgres_user: str = "slr_user"
     postgres_password: str = "changeme"
-    database_url: str = ""
+    database_url: str = "postgresql+asyncpg://slr_user:changeme@localhost:5432/slr_nexus"
 
     # --- Qdrant ---
     qdrant_host: str = "localhost"
@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     qdrant_chunks_collection: str = "chunks"
     qdrant_memory_collection: str = "semantic_memory"
     embedding_vector_size: int = 384
+    embedding_model: str = "all-minilm"
+    embedding_provider: str = "ollama"
+    embedding_model_revision: str = ""
+    reranker_model: str = ""
+    reranker_model_revision: str = ""
+    pdf_max_bytes: int = 52428800
 
     # --- Neo4j (Phase 6+) ---
     neo4j_uri: str = "bolt://localhost:7687"
@@ -77,6 +83,7 @@ class Settings(BaseSettings):
 
     # --- Retrieval ---
     retrieval_top_k: int = 20
+    retrieval_rrf_k: int = 60
     chunk_size_tokens: int = 512
     chunk_overlap_tokens: int = 64
     min_chunk_tokens: int = 100

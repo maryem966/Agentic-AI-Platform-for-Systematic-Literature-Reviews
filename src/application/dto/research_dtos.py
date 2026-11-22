@@ -5,6 +5,8 @@ Ces modèles ne sont PAS des entités du domaine.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 # --- Projet ---
@@ -106,4 +108,5 @@ class RAGQueryDTO(BaseModel):
     research_id: str
     query: str = Field(..., min_length=3)
     top_k: int = Field(default=10, ge=1, le=50)
-    strategy: str = Field(default="hybrid")  # "bm25", "dense", "hybrid", "graph"
+    strategy: Literal["bm25", "dense", "hybrid", "hybrid_rerank"] = "hybrid"
+    route: bool = False

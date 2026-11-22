@@ -94,8 +94,7 @@ class PRISMACounter:
     """
     Service de calcul des comptages PRISMA.
 
-    En Phase 0 : implémentation stub.
-    En Phase 2 : sera connecté aux repositories PostgreSQL réels.
+    Les flux peuvent être construits depuis des nombres bruts ou calculés depuis PostgreSQL.
     """
 
     def build_from_counts(
@@ -129,3 +128,5 @@ class PRISMACounter:
             inaccessible=inaccessible,
             included=included,
         )
+
+

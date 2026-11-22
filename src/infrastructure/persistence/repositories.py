@@ -7,25 +7,35 @@ from typing import Any
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...domain.entities.chunk import Chunk
 from ...domain.entities.claim import Claim, ClaimEvidenceLink
 from ...domain.entities.evidence import Evidence
+from ...domain.entities.extraction_record import ExtractionRecord
+from ...domain.entities.full_text_document import FullTextDocument
 from ...domain.entities.publication import Author, Publication
 from ...domain.entities.research_project import ResearchProject
 from ...domain.entities.research_protocol import ResearchProtocol
 from ...domain.entities.screening_decision import ScreeningDecision
+from ...domain.entities.search_run import SearchRun
 from ...domain.ports.evidence_port import EvidencePort
 from ...domain.ports.protocol_repository import ProtocolRepository
 from ...domain.ports.publication_repository import PublicationRepository
 from ...domain.ports.research_project_repository import ResearchProjectRepository
+from ...domain.services.prisma_counter import PRISMACounter, PRISMAFlow
 from .models import (
     AuditLogORM,
+    ChunkORM,
     ClaimEvidenceLinkORM,
     ClaimORM,
     EvidenceORM,
+    ExtractionRecordORM,
+    FullTextDocumentORM,
     PublicationORM,
     ResearchProjectORM,
     ResearchProtocolORM,
     ScreeningDecisionORM,
+    SearchQueryORM,
+    SearchRunORM,
 )
 
 
@@ -51,8 +61,98 @@ def _evidence_from_row(row: EvidenceORM) -> Evidence:
     return Evidence.model_validate({key: getattr(row, key) for key in Evidence.model_fields})
 
 
+def _chunk_from_row(row: ChunkORM) -> Chunk:
+    return Chunk.model_validate({key: getattr(row, key) for key in Chunk.model_fields})
+
+
+def _document_from_row(row: FullTextDocumentORM) -> FullTextDocument:
+    return FullTextDocument.model_validate(
+        {key: getattr(row, key) for key in FullTextDocument.model_fields}
+    )
+
+
+class FullTextDocumentRepo:
+    """Persist document extraction state; hashes make repeat ingestion idempotent."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def save(self, document: FullTextDocument) -> FullTextDocument:
+        row = await self.session.get(FullTextDocumentORM, document.id)
+        if row is None:
+            row = (
+                await self.session.scalars(
+                    select(FullTextDocumentORM).where(
+                        FullTextDocumentORM.file_hash == document.file_hash
+                    )
+                )
+            ).first()
+        values = document.model_dump(mode="python")
+        if row is None:
+            row = FullTextDocumentORM(**values)
+            self.session.add(row)
+        else:
+            for key, value in values.items():
+                if key != "id":
+                    setattr(row, key, value)
+        await self.session.flush()
+        return _document_from_row(row)
+
+    async def find_by_id(self, document_id: str) -> FullTextDocument | None:
+        row = await self.session.get(FullTextDocumentORM, document_id)
+        return _document_from_row(row) if row else None
+
+
+class ChunkRepo:
+    """Persist chunk metadata idempotently by document and chunk index."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def save_many(self, chunks: list[Chunk]) -> list[Chunk]:
+        saved_rows: list[ChunkORM] = []
+        for chunk in chunks:
+            row = await self.session.get(ChunkORM, chunk.id)
+            if row is None:
+                row = (
+                    await self.session.scalars(
+                        select(ChunkORM).where(
+                            ChunkORM.document_id == chunk.document_id,
+                            ChunkORM.chunk_index == chunk.chunk_index,
+                        )
+                    )
+                ).first()
+            values = chunk.model_dump(mode="python")
+            if row is None:
+                row = ChunkORM(**values)
+                self.session.add(row)
+            else:
+                for key, value in values.items():
+                    if key != "id":
+                        setattr(row, key, value)
+            saved_rows.append(row)
+        await self.session.flush()
+        return [_chunk_from_row(row) for row in saved_rows]
+
+    async def list_for_publications(self, publication_ids: list[str]) -> list[Chunk]:
+        if not publication_ids:
+            return []
+        rows = await self.session.scalars(
+            select(ChunkORM)
+            .where(ChunkORM.publication_id.in_(publication_ids))
+            .order_by(ChunkORM.publication_id, ChunkORM.chunk_index)
+        )
+        return [_chunk_from_row(row) for row in rows]
+
+
 def _claim_from_row(row: ClaimORM) -> Claim:
     return Claim.model_validate({key: getattr(row, key) for key in Claim.model_fields})
+
+
+def _extraction_record_from_row(row: ExtractionRecordORM) -> ExtractionRecord:
+    return ExtractionRecord.model_validate(
+        {key: getattr(row, key) for key in ExtractionRecord.model_fields}
+    )
 
 
 class ProjectRepo(ResearchProjectRepository):
@@ -406,6 +506,69 @@ class ScreeningRepo:
             for row in rows
         ]
 
+    async def calculate_prisma_flow(self, research_id: str) -> PRISMAFlow:
+        """Derive counts from persisted search runs, screening decisions and documents."""
+        run_rows = await self.session.scalars(
+            select(SearchRunORM)
+            .where(SearchRunORM.research_id == research_id)
+            .order_by(SearchRunORM.executed_at.desc(), SearchRunORM.id.desc())
+        )
+        latest_run = run_rows.first()
+        identified = dict(latest_run.results_by_source) if latest_run else {}
+        duplicates = latest_run.duplicates_removed if latest_run else 0
+
+        rows = await self.session.scalars(
+            select(ScreeningDecisionORM)
+            .where(ScreeningDecisionORM.research_id == research_id)
+            .order_by(ScreeningDecisionORM.created_at, ScreeningDecisionORM.id)
+        )
+        latest: dict[tuple[str, str], Any] = {}
+        for row in rows:
+            latest[(row.publication_id, row.screening_stage)] = row
+        title = [row for (pub, stage), row in latest.items() if stage == "title_abstract"]
+        full = [row for (pub, stage), row in latest.items() if stage == "full_text"]
+        title_excluded = [row for row in title if row.decision == "exclude"]
+        full_excluded = [row for row in full if row.decision == "exclude"]
+        included = sum(row.decision == "include" for row in full)
+        included_title = sum(row.decision == "include" for row in title)
+        doc_statuses: dict[str, int] = {}
+        if included_title:
+            docs = await self.session.execute(
+                select(FullTextDocumentORM.extraction_status, func.count())
+                .where(
+                    FullTextDocumentORM.publication_id.in_(
+                        [row.publication_id for row in title if row.decision == "include"]
+                    )
+                )
+                .group_by(FullTextDocumentORM.extraction_status)
+            )
+            doc_statuses = dict(docs.all())
+        inaccessible = doc_statuses.get("inaccessible", 0) + doc_statuses.get("failed", 0)
+
+        title_reason_counts: dict[str, int] = {}
+        for row in title_excluded:
+            reason = row.exclusion_reason or "other"
+            title_reason_counts[reason] = title_reason_counts.get(reason, 0) + 1
+
+        full_reason_counts: dict[str, int] = {}
+        for row in full_excluded:
+            reason = row.exclusion_reason or "other"
+            full_reason_counts[reason] = full_reason_counts.get(reason, 0) + 1
+
+        flow = PRISMACounter().build_from_counts(
+            identified_by_source=identified,
+            duplicates_removed=duplicates,
+            excluded_title_abstract=len(title_excluded),
+            excluded_title_abstract_reasons=title_reason_counts,
+            inaccessible=inaccessible,
+            excluded_full_text=len(full_excluded),
+            excluded_full_text_reasons=full_reason_counts,
+            included=included,
+        )
+        flow.screened_title_abstract = len(title)
+        flow.assessed_full_text = included_title
+        return flow
+
 
 class AuditLogRepo:
     """Append-only audit journal. No update/delete API is intentionally exposed."""
@@ -453,3 +616,77 @@ class AuditLogRepo:
             .order_by(AuditLogORM.created_at, AuditLogORM.id)
         )
         return list(rows)
+
+
+class SearchRunRepo:
+    """Persist search runs and their verbatim per-source queries atomically."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def save(self, run: SearchRun) -> SearchRun:
+        values = {
+            "id": run.id,
+            "research_id": run.research_id,
+            "protocol_id": run.protocol_id,
+            "protocol_version": run.protocol_version,
+            "executed_at": run.executed_at,
+            "results_by_source": run.results_by_source,
+            "duplicates_removed": run.duplicates_removed,
+            "agent_execution_id": run.agent_execution_id,
+        }
+        row = await self.session.get(SearchRunORM, run.id)
+        if row is None:
+            self.session.add(SearchRunORM(**values))
+        else:
+            for key, value in values.items():
+                setattr(row, key, value)
+        for query in run.queries:
+            query_row = await self.session.get(SearchQueryORM, query.id)
+            query_values = query.model_dump(mode="python")
+            if query_row is None:
+                self.session.add(SearchQueryORM(**query_values))
+            else:
+                for key, value in query_values.items():
+                    setattr(query_row, key, value)
+        await self.session.flush()
+        return run
+
+
+class ExtractionRecordRepo:
+    """Repository for structured extraction records linked to publications and source chunks."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def save(self, record: ExtractionRecord) -> ExtractionRecord:
+        row = await self.session.get(ExtractionRecordORM, record.id)
+        values = record.model_dump(mode="python")
+        if row is None:
+            row = ExtractionRecordORM(**values)
+            self.session.add(row)
+        else:
+            for key, value in values.items():
+                setattr(row, key, value)
+        await self.session.flush()
+        return _extraction_record_from_row(row)
+
+    async def find_by_id(self, record_id: str) -> ExtractionRecord | None:
+        row = await self.session.get(ExtractionRecordORM, record_id)
+        return _extraction_record_from_row(row) if row else None
+
+    async def find_by_research(self, research_id: str) -> list[ExtractionRecord]:
+        rows = await self.session.scalars(
+            select(ExtractionRecordORM)
+            .where(ExtractionRecordORM.research_id == research_id)
+            .order_by(ExtractionRecordORM.created_at)
+        )
+        return [_extraction_record_from_row(row) for row in rows]
+
+    async def find_by_publication(self, publication_id: str) -> list[ExtractionRecord]:
+        rows = await self.session.scalars(
+            select(ExtractionRecordORM)
+            .where(ExtractionRecordORM.publication_id == publication_id)
+            .order_by(ExtractionRecordORM.created_at)
+        )
+        return [_extraction_record_from_row(row) for row in rows]

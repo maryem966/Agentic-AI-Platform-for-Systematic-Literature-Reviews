@@ -114,7 +114,7 @@ Les vérifications de compatibilité des versions sont décrites dans `docs/depe
 | **2** | LangGraph, Planning Agent, Search Agent, HITL | 3 sem | ⬜ |
 | **3** | Screening Agent, PDF ingestion, Evidence Registry | 3 sem | ⬜ |
 | **4** | RAG hybride complet + Golden Dataset + benchmark | 3 sem | ⬜ |
-| **5** | Research Assistant Agent + Claim Verifier 4 niveaux | 3 sem | ⬜ |
+| **5** | Research Assistant Agent + Claim Verifier 4 niveaux | 3 sem | 🟢 Terminé |
 | **6** | Neo4j + Graph Retrieval + HybridGraphRAG | 3 sem | ⬜ |
 | **7** | Writing Agent + Critic + Quality + rapport validé | 2 sem | ⬜ |
 | **8** | Mémoire épisodique + sémantique + isolation | 2 sem | ⬜ |

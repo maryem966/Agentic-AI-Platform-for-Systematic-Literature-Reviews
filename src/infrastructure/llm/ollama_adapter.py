@@ -47,7 +47,7 @@ class OllamaAdapter(LLMPort):
         )
         message = result.message
         return LLMResponse(
-            content=message.content,
+            content=str(message.content or ""),
             model=result.model or self._model,
             provider=self.provider_name,
             tokens_input=result.prompt_eval_count or 0,

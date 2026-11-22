@@ -121,7 +121,14 @@ class QdrantVectorStoreAdapter(VectorStore):
         if not filters:
             return None
         conditions = [
-            models.FieldCondition(key=key, match=models.MatchValue(value=value))
+            models.FieldCondition(
+                key=key,
+                match=(
+                    models.MatchAny(any=value)
+                    if isinstance(value, list)
+                    else models.MatchValue(value=value)
+                ),
+            )
             for key, value in filters.items()
         ]
         return models.Filter(must=conditions)
