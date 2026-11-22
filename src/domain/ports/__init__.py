@@ -1,12 +1,8 @@
 """Ports (interfaces abstraites) du domaine SLR-Nexus."""
-
-from .evidence_port import EvidencePort
-from .kg_repository import GraphResult, KGRepository
-from .llm_port import LLMPort, LLMResponse
-from .protocol_repository import ProtocolRepository
 from .publication_repository import PublicationRepository
-from .research_project_repository import ResearchProjectRepository
-from .vector_store import VectorSearchResult, VectorStore
+from .vector_store import VectorStore, VectorSearchResult
+from .llm_port import LLMPort, LLMResponse
+from .evidence_port import EvidencePort
 
 __all__ = [
     "PublicationRepository",
@@ -15,8 +11,4 @@ __all__ = [
     "LLMPort",
     "LLMResponse",
     "EvidencePort",
-    "KGRepository",
-    "GraphResult",
-    "ResearchProjectRepository",
-    "ProtocolRepository",
 ]

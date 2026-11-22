@@ -7,9 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from ..agents.planning_agent import PlanningAgent
+from ..agents.quality_agent import QualityAgent
 from ..agents.research_assistant_agent import ResearchAssistantAgent
 from ..agents.screening_agent import ScreeningAgent
 from ..agents.search_agent import SearchAgent
+from ..agents.writing_agent import WritingAgent
 from ..application.dto.research_dtos import PlanningInput
 from ..domain.entities.human_review import HumanReview
 from ..domain.entities.publication import Publication
@@ -47,6 +49,8 @@ def build_research_graph(
     planning_agent = PlanningAgent(llm)
     screening_agent = ScreeningAgent(llm)
     assistant_agent = ResearchAssistantAgent(llm)
+    writing_agent = WritingAgent(llm)
+    quality_agent = QualityAgent(llm)
     indexing_pipeline = DocumentIndexingPipeline(vector_store) if vector_store else None
 
     async def planning(state: ResearchState) -> dict[str, Any]:
@@ -482,13 +486,91 @@ def build_research_graph(
         }
 
     async def writing(state: ResearchState) -> dict[str, Any]:
-        return {"workflow_decision": "ACCEPT"}
+        research_id = state["research_id"]
+        protocol_dict = state.get("protocol", {})
+        from ..domain.entities.research_protocol import ResearchQuestion
+        questions = [ResearchQuestion(**q) for q in protocol_dict.get("research_questions", [])]
+
+        async with session_factory() as session:
+            evidence_repo = EvidenceRepo(session)
+            evidences = await evidence_repo.find_by_research(research_id)
+            report, claims, links = await writing_agent.write_report(
+                research_id=research_id,
+                questions=questions,
+                evidences=evidences,
+                revision_feedback=state.get("review_justification"),
+                previous_version=state.get("revision_count", 0),
+            )
+            for c in claims:
+                await evidence_repo.save_claim(c)
+            for l in links:
+                await evidence_repo.link_claim_to_evidence(l)
+            await session.commit()
+
+        return {
+            "report_draft": report.content,
+            "report_version": report.version,
+            "claims": [c.model_dump(mode="json") for c in claims],
+        }
 
     async def critic(state: ResearchState) -> dict[str, Any]:
-        return {"workflow_decision": "ACCEPT"}
+        return {"critic_findings": []}
 
     async def quality(state: ResearchState) -> dict[str, Any]:
-        return {"workflow_decision": "ACCEPT"}
+        research_id = state["research_id"]
+        protocol_dict = state.get("protocol", {})
+        from ..domain.entities.research_protocol import ResearchQuestion
+        from ..domain.entities.report_version import ReportVersion
+        from ..domain.entities.claim import Claim
+
+        questions = [ResearchQuestion(**q) for q in protocol_dict.get("research_questions", [])]
+        report = ReportVersion(
+            id=str(uuid.uuid4()),
+            research_id=research_id,
+            version=state.get("report_version", 1),
+            content=state.get("report_draft", {}),
+            generated_by_agent="writing_agent",
+        )
+        claims = [Claim(**c) for c in state.get("claims", [])]
+
+        async with session_factory() as session:
+            evidence_repo = EvidenceRepo(session)
+            evidences = await evidence_repo.find_by_research(research_id)
+            # Récupération des liens
+            all_links = []
+            for c in claims:
+                claim_evs = await evidence_repo.find_evidence_for_claim(c.id)
+                for ev in claim_evs:
+                    from ..domain.entities.claim import ClaimEvidenceLink
+                    all_links.append(
+                        ClaimEvidenceLink(
+                            claim_id=c.id,
+                            evidence_id=ev.id,
+                            link_type="supports",
+                            link_confidence=0.9,
+                            created_by="auto",
+                        )
+                    )
+
+            verdict = await quality_agent.evaluate_report(
+                report=report,
+                required_questions=questions,
+                claims=claims,
+                links=all_links,
+                available_evidences=evidences,
+                revision_count=state.get("revision_count", 0),
+                max_revisions=3,
+            )
+
+        return {
+            "workflow_decision": verdict.verdict,
+            "overall_quality_score": verdict.overall_quality_score,
+            "rq_coverage": verdict.rq_coverage_ratio,
+            "grounding_ratio": verdict.grounding_ratio,
+            "repair_target": verdict.repair_target,
+            "review_justification": verdict.feedback_for_repair,
+            "revision_count": state.get("revision_count", 0) + (1 if verdict.verdict == "REVISE" else 0),
+        }
 
     def after_review(state: ResearchState) -> str:
         return state["protocol_decision"].lower()
